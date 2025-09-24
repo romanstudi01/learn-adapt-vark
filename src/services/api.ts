@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { User, VarkQuestion, VarkResult, Question, Answer, TestSession, AuthForm, ApiResponse } from '@/types';
 
-const API_BASE_URL = 'https://n8n.romanstudi0.pp.ua/webhook';
+const API_BASE_URL = 'https://n8n.romanstudi0.pp.ua/webhook-test';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
