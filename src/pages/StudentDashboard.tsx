@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { VarkTest } from '@/components/vark/VarkTest';
 import { VarkResults } from '@/components/vark/VarkResults';
 import { AdaptiveTest } from '@/components/test/AdaptiveTest';
+import { StudentResults } from '@/components/results/StudentResults';
 import { useAuth } from '@/context/AuthContext';
+import { varkAPI } from '@/services/api';
 import { Brain, Target, BarChart3, User } from 'lucide-react';
 
 type DashboardView = 'overview' | 'vark-test' | 'vark-results' | 'adaptive-test' | 'results';
@@ -13,6 +15,23 @@ export const StudentDashboard = () => {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<DashboardView>('overview');
   const [varkResults, setVarkResults] = useState<any>(null);
+  const [hasExistingVarkResult, setHasExistingVarkResult] = useState(false);
+
+  useEffect(() => {
+    checkExistingVarkResult();
+  }, []);
+
+  const checkExistingVarkResult = async () => {
+    try {
+      const result = await varkAPI.getUserResult();
+      if (result.success && result.data) {
+        setVarkResults(result.data);
+        setHasExistingVarkResult(true);
+      }
+    } catch (error) {
+      console.error('Failed to check VARK result:', error);
+    }
+  };
 
   const handleVarkComplete = (results: any) => {
     setVarkResults(results);
@@ -26,7 +45,7 @@ export const StudentDashboard = () => {
   const renderContent = () => {
     switch (currentView) {
       case 'vark-test':
-        return <VarkTest onComplete={handleVarkComplete} />;
+        return <VarkTest onComplete={handleVarkComplete} hasExistingResult={hasExistingVarkResult} />;
       case 'vark-results':
         return varkResults ? (
           <VarkResults 
@@ -37,19 +56,7 @@ export const StudentDashboard = () => {
       case 'adaptive-test':
         return <AdaptiveTest />;
       case 'results':
-        return (
-          <Card className="gradient-card shadow-elevated">
-            <CardHeader>
-              <CardTitle>Мої результати</CardTitle>
-              <CardDescription>Ваші досягнення та статистика</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Результати тестування будуть відображені тут після проходження тестів.
-              </p>
-            </CardContent>
-          </Card>
-        );
+        return <StudentResults />;
       default:
         return (
           <div className="space-y-6">
@@ -69,11 +76,22 @@ export const StudentDashboard = () => {
                   <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
                     <h4 className="font-medium text-primary mb-2">VARK Тест</h4>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Визначте свій стиль навчання за методикою VARK
+                      {hasExistingVarkResult 
+                        ? `Ваш тип: ${varkResults?.vark_type || 'визначається'}`
+                        : 'Визначте свій стиль навчання за методикою VARK'}
                     </p>
-                    <Button onClick={() => setCurrentView('vark-test')} variant="default">
-                      Пройти тест
+                    <Button onClick={() => setCurrentView(hasExistingVarkResult ? 'vark-results' : 'vark-test')} variant="default">
+                      {hasExistingVarkResult ? 'Переглянути результати' : 'Пройти тест'}
                     </Button>
+                    {hasExistingVarkResult && (
+                      <Button 
+                        onClick={() => setCurrentView('vark-test')} 
+                        variant="outline" 
+                        className="mt-2 w-full"
+                      >
+                        Пройти тест повторно
+                      </Button>
+                    )}
                   </div>
                   <div className="p-4 rounded-lg bg-success/5 border border-success/20">
                     <h4 className="font-medium text-success mb-2">Адаптивне тестування</h4>

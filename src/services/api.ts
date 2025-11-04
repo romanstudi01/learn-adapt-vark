@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, VarkQuestion, VarkResult, Question, Answer, TestSession, AuthForm, ApiResponse } from '@/types';
+import { User, VarkQuestion, VarkResult, Question, Answer, TestSession, AuthForm, ApiResponse, Subject, StudentStats } from '@/types';
 
 const API_BASE_URL = 'https://n8n.romanstudi0.pp.ua/webhook-test';
 
@@ -10,14 +10,15 @@ const api = axios.create({
   },
 });
 
-// Add auth token to requests if available
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// Helper to get user email from localStorage
+const getUserEmail = (): string => {
+  return localStorage.getItem('user_email') || '';
+};
+
+// Helper to set user email
+export const setUserEmail = (email: string) => {
+  localStorage.setItem('user_email', email);
+};
 
 // Auth APIs
 export const authAPI = {
@@ -72,9 +73,13 @@ export const varkAPI = {
     }
   },
 
-  submitResults: async (results: VarkResult): Promise<ApiResponse<{ vark_type: string }>> => {
+  submitResults: async (results: Omit<VarkResult, 'user_id'>): Promise<ApiResponse<{ vark_type: string }>> => {
     try {
-      const response = await api.post('/vark/submit', results);
+      const email = getUserEmail();
+      const response = await api.post('/vark/submit', {
+        email,
+        ...results
+      });
       return response.data;
     } catch (error: any) {
       return {
@@ -82,28 +87,64 @@ export const varkAPI = {
         error: error.response?.data?.message || 'Failed to submit VARK results'
       };
     }
-  }
-};
+  },
 
-// Adaptive Test APIs
-export const testAPI = {
-  getNextQuestion: async (sessionId?: string): Promise<ApiResponse<{ question: Question; session: TestSession }>> => {
+  getUserResult: async (): Promise<ApiResponse<VarkResult & { vark_type: string }>> => {
     try {
-      const response = await api.get('/test/next-question', {
-        params: { session_id: sessionId }
+      const email = getUserEmail();
+      const response = await api.get('/vark/user-result', {
+        params: { email }
       });
       return response.data;
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.message || 'Failed to get next question'
+        error: error.response?.data?.message || 'Failed to get VARK result'
+      };
+    }
+  }
+};
+
+// Adaptive Test APIs
+export const testAPI = {
+  getSubjects: async (): Promise<ApiResponse<Subject[]>> => {
+    try {
+      const response = await api.get('/test/subjects');
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to load subjects'
       };
     }
   },
 
-  submitAnswer: async (answer: Answer): Promise<ApiResponse<{ is_correct: boolean; next_difficulty: string }>> => {
+  startTest: async (subjectId: string): Promise<ApiResponse<{ question: Question; session_id: string }>> => {
     try {
-      const response = await api.post('/test/submit-answer', answer);
+      const email = getUserEmail();
+      const response = await api.post('/test/start', {
+        email,
+        subject_id: subjectId
+      });
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to start test'
+      };
+    }
+  },
+
+  submitAnswer: async (sessionId: string, questionId: string, answer: number, timeSpent: number): Promise<ApiResponse<{ is_correct: boolean; next_question?: Question; completed?: boolean }>> => {
+    try {
+      const email = getUserEmail();
+      const response = await api.post('/test/submit-answer', {
+        email,
+        session_id: sessionId,
+        question_id: questionId,
+        answer,
+        time_spent: timeSpent
+      });
       return response.data;
     } catch (error: any) {
       return {
@@ -115,12 +156,92 @@ export const testAPI = {
 
   getResults: async (): Promise<ApiResponse<any>> => {
     try {
-      const response = await api.get('/results');
+      const email = getUserEmail();
+      const response = await api.get('/results', {
+        params: { email }
+      });
       return response.data;
     } catch (error: any) {
       return {
         success: false,
         error: error.response?.data?.message || 'Failed to get results'
+      };
+    }
+  }
+};
+
+// Teacher APIs
+export const teacherAPI = {
+  createQuestion: async (questionData: {
+    text: string;
+    options: string[];
+    correct_answer: number;
+    difficulty: 'easy' | 'medium' | 'hard';
+    subject: string;
+  }): Promise<ApiResponse<{ id: string }>> => {
+    try {
+      const response = await api.post('/teacher/questions', questionData);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to create question'
+      };
+    }
+  },
+
+  updateQuestion: async (questionId: string, questionData: {
+    text: string;
+    options: string[];
+    correct_answer: number;
+    difficulty: 'easy' | 'medium' | 'hard';
+    subject: string;
+  }): Promise<ApiResponse<{ success: boolean }>> => {
+    try {
+      const response = await api.put(`/teacher/questions/${questionId}`, questionData);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to update question'
+      };
+    }
+  },
+
+  getQuestions: async (subject?: string): Promise<ApiResponse<Question[]>> => {
+    try {
+      const response = await api.get('/teacher/questions', {
+        params: { subject }
+      });
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to get questions'
+      };
+    }
+  },
+
+  deleteQuestion: async (questionId: string): Promise<ApiResponse<{ success: boolean }>> => {
+    try {
+      const response = await api.delete(`/teacher/questions/${questionId}`);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to delete question'
+      };
+    }
+  },
+
+  getStudentsStats: async (): Promise<ApiResponse<StudentStats[]>> => {
+    try {
+      const response = await api.get('/teacher/students');
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to get students statistics'
       };
     }
   }

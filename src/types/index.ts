@@ -9,11 +9,27 @@ export interface User {
 }
 
 export interface VarkResult {
-  user_id: string;
+  user_id?: string;
   visual: number;
   auditory: number;
   read_write: number;
   kinesthetic: number;
+}
+
+export interface Subject {
+  id: string;
+  name: string;
+  description?: string;
+  questions_count: number;
+}
+
+export interface StudentStats {
+  email: string;
+  name?: string;
+  vark_type?: VarkType;
+  tests_completed: number;
+  average_score: number;
+  last_test_date?: string;
 }
 
 export type VarkType = 'visual' | 'auditory' | 'read_write' | 'kinesthetic';

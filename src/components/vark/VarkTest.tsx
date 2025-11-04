@@ -38,7 +38,12 @@ interface VarkTestProps {
   onComplete: (results: { visual: number; auditory: number; read_write: number; kinesthetic: number }) => void;
 }
 
-export const VarkTest = ({ onComplete }: VarkTestProps) => {
+interface VarkTestProps {
+  onComplete: (results: { visual: number; auditory: number; read_write: number; kinesthetic: number }) => void;
+  hasExistingResult?: boolean;
+}
+
+export const VarkTest = ({ onComplete, hasExistingResult }: VarkTestProps) => {
   const [questions, setQuestions] = useState<VarkQuestion[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, VarkType>>({});
@@ -109,12 +114,20 @@ export const VarkTest = ({ onComplete }: VarkTestProps) => {
     };
 
     try {
-      await varkAPI.submitResults({
-        user_id: 'current_user', // This would come from auth context
-        ...percentages
-      });
+      const response = await varkAPI.submitResults(percentages);
+      if (response.success) {
+        toast({
+          title: "Успіх",
+          description: hasExistingResult ? "Результати тесту оновлено" : "Результати тесту збережено",
+        });
+      }
     } catch (error) {
       console.error('Failed to submit VARK results:', error);
+      toast({
+        title: "Помилка",
+        description: "Не вдалося зберегти результати",
+        variant: "destructive",
+      });
     }
 
     onComplete(percentages);

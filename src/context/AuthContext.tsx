@@ -89,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const result = await authAPI.login({ email, password });
     
     if (result.success && result.data) {
+      localStorage.setItem('user_email', email);
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: { user: result.data.user, token: result.data.token },
@@ -105,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const result = await authAPI.register({ email, password, role });
     
     if (result.success && result.data) {
+      localStorage.setItem('user_email', email);
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: { user: result.data.user, token: result.data.token },
@@ -117,6 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    localStorage.removeItem('user_email');
     dispatch({ type: 'LOGOUT' });
   };
 
