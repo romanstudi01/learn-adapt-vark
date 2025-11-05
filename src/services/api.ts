@@ -20,6 +20,20 @@ export const setUserEmail = (email: string) => {
   localStorage.setItem('user_email', email);
 };
 
+// Helper to parse options from string or array
+const parseOptions = (options: any): string[] => {
+  if (Array.isArray(options)) {
+    return options;
+  }
+  if (typeof options === 'string') {
+    // Parse string like "\"14\",\"20\", \"10\", \"24\""
+    return options
+      .split(',')
+      .map(opt => opt.trim().replace(/^["']/, '').replace(/["']$/, ''));
+  }
+  return [];
+};
+
 // Auth APIs
 export const authAPI = {
   register: async (data: AuthForm): Promise<ApiResponse<{ user: User; token: string }>> => {
@@ -145,7 +159,7 @@ export const testAPI = {
         const question: Question = {
           id: questionData.id,
           text: questionData.text,
-          options: Array.isArray(questionData.options) ? questionData.options : [],
+          options: parseOptions(questionData.options),
           correct_answer: questionData.correct_answer || 0,
           difficulty: questionData.difficulty,
           subject: questionData.subject
@@ -192,7 +206,7 @@ export const testAPI = {
           result.next_question = {
             id: nextQuestionData.id,
             text: nextQuestionData.text,
-            options: Array.isArray(nextQuestionData.options) ? nextQuestionData.options : [],
+            options: parseOptions(nextQuestionData.options),
             correct_answer: nextQuestionData.correct_answer || 0,
             difficulty: nextQuestionData.difficulty,
             subject: nextQuestionData.subject
