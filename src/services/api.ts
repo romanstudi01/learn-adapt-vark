@@ -145,8 +145,8 @@ export const testAPI = {
         const question: Question = {
           id: questionData.id,
           text: questionData.text,
-          options: questionData.options,
-          correct_answer: questionData.correct_answer || 0, // Backend may not send this
+          options: Array.isArray(questionData.options) ? questionData.options : [],
+          correct_answer: questionData.correct_answer || 0,
           difficulty: questionData.difficulty,
           subject: questionData.subject
         };
@@ -177,7 +177,31 @@ export const testAPI = {
         answer,
         time_spent: timeSpent
       });
-      return response.data;
+      
+      // Handle n8n response format
+      const serverResponse = response.data;
+      if (serverResponse.success && serverResponse.data) {
+        const result: { is_correct: boolean; next_question?: Question; completed?: boolean } = {
+          is_correct: serverResponse.data.is_correct,
+          completed: serverResponse.data.completed
+        };
+        
+        // Parse next question if exists
+        if (serverResponse.data.next_question) {
+          const nextQuestionData = serverResponse.data.next_question;
+          result.next_question = {
+            id: nextQuestionData.id,
+            text: nextQuestionData.text,
+            options: Array.isArray(nextQuestionData.options) ? nextQuestionData.options : [],
+            correct_answer: nextQuestionData.correct_answer || 0,
+            difficulty: nextQuestionData.difficulty,
+            subject: nextQuestionData.subject
+          };
+        }
+        
+        return { success: true, data: result };
+      }
+      return { success: false, error: 'Invalid response format' };
     } catch (error: any) {
       return {
         success: false,
