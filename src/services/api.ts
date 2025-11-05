@@ -110,7 +110,18 @@ export const testAPI = {
   getSubjects: async (): Promise<ApiResponse<Subject[]>> => {
     try {
       const response = await api.get('/test/subjects');
-      return response.data;
+      // Handle n8n response format: [{ success: true, data: [{ json: {...} }] }]
+      const serverResponse = Array.isArray(response.data) ? response.data[0] : response.data;
+      if (serverResponse.success && serverResponse.data) {
+        const subjects = serverResponse.data.map((item: any) => ({
+          id: item.json.subject_id,
+          name: item.json.name,
+          description: item.json.description,
+          questions_count: item.json.questions_count
+        }));
+        return { success: true, data: subjects };
+      }
+      return { success: false, error: 'Invalid response format' };
     } catch (error: any) {
       return {
         success: false,
@@ -126,7 +137,28 @@ export const testAPI = {
         email,
         subject_id: subjectId
       });
-      return response.data;
+      
+      // Handle n8n response format
+      const serverResponse = response.data;
+      if (serverResponse.success && serverResponse.data) {
+        const questionData = serverResponse.data.question;
+        const question: Question = {
+          id: questionData.id,
+          text: questionData.text,
+          options: questionData.options,
+          correct_answer: questionData.correct_answer || 0, // Backend may not send this
+          difficulty: questionData.difficulty,
+          subject: questionData.subject
+        };
+        return {
+          success: true,
+          data: {
+            session_id: serverResponse.data.session_id,
+            question
+          }
+        };
+      }
+      return { success: false, error: 'Invalid response format' };
     } catch (error: any) {
       return {
         success: false,
