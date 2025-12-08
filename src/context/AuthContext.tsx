@@ -102,6 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (email: string, password: string, role: 'student' | 'teacher'): Promise<boolean> => {
+    console.log('AuthContext register called with role:', role);
     dispatch({ type: 'LOGIN_START' });
     const result = await authAPI.register({ email, password, role });
     

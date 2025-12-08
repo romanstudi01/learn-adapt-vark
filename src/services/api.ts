@@ -38,6 +38,7 @@ const parseOptions = (options: any): string[] => {
 export const authAPI = {
   register: async (data: AuthForm): Promise<ApiResponse<{ user: User; token: string }>> => {
     try {
+      console.log('API register called with data:', data);
       const response = await api.post('/auth/register', data);
       return response.data;
     } catch (error: any) {
