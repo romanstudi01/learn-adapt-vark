@@ -49,6 +49,7 @@ export const RegisterForm = ({ onSwitchToLogin }: RegisterFormProps) => {
       return;
     }
 
+    console.log('Registering with role:', role);
     const success = await register(email, password, role);
     if (!success) {
       toast({
@@ -104,14 +105,21 @@ export const RegisterForm = ({ onSwitchToLogin }: RegisterFormProps) => {
           </div>
           <div className="space-y-3">
             <Label>Роль</Label>
-            <RadioGroup value={role} onValueChange={(value) => setRole(value as 'student' | 'teacher')}>
+            <RadioGroup 
+              defaultValue="student" 
+              value={role} 
+              onValueChange={(value) => {
+                console.log('RadioGroup value changed to:', value);
+                setRole(value as 'student' | 'teacher');
+              }}
+            >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="student" id="student" />
-                <Label htmlFor="student">Студент</Label>
+                <RadioGroupItem value="student" id="role-student" />
+                <Label htmlFor="role-student" className="cursor-pointer">Студент</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="teacher" id="teacher" />
-                <Label htmlFor="teacher">Викладач</Label>
+                <RadioGroupItem value="teacher" id="role-teacher" />
+                <Label htmlFor="role-teacher" className="cursor-pointer">Викладач</Label>
               </div>
             </RadioGroup>
           </div>
