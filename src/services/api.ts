@@ -26,10 +26,18 @@ const parseOptions = (options: any): string[] => {
     return options;
   }
   if (typeof options === 'string') {
-    // Parse string like "\"14\",\"20\", \"10\", \"24\""
-    return options
-      .split(',')
-      .map(opt => opt.trim().replace(/^["']/, '').replace(/["']$/, ''));
+    // Try to parse as JSON array first (e.g., "[\"HTTP\",\"FTP\",\"HTTPS\",\"SMTP\"]")
+    try {
+      const parsed = JSON.parse(options);
+      if (Array.isArray(parsed)) {
+        return parsed.map(opt => String(opt).trim());
+      }
+    } catch {
+      // If JSON parse fails, parse as comma-separated string (e.g., "\"14\",\"20\", \"10\", \"24\"")
+      return options
+        .split(',')
+        .map(opt => opt.trim().replace(/^["'\[\]]+/, '').replace(/["'\[\]]+$/, ''));
+    }
   }
   return [];
 };
