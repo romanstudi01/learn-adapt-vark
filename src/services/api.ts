@@ -23,13 +23,22 @@ export const setUserEmail = (email: string) => {
 // Helper to parse options from string or array
 const parseOptions = (options: any): string[] => {
   if (Array.isArray(options)) {
-    return options;
+    // Handle nested array: [["O(n)","O(log n)","O(n^2)","O(1)"]]
+    if (options.length === 1 && Array.isArray(options[0])) {
+      return options[0].map(opt => String(opt).trim());
+    }
+    // Regular array: ["A", "B", "C"]
+    return options.map(opt => String(opt).trim());
   }
   if (typeof options === 'string') {
     // Try to parse as JSON array first (e.g., "[\"HTTP\",\"FTP\",\"HTTPS\",\"SMTP\"]")
     try {
       const parsed = JSON.parse(options);
       if (Array.isArray(parsed)) {
+        // Handle nested array from JSON parse
+        if (parsed.length === 1 && Array.isArray(parsed[0])) {
+          return parsed[0].map(opt => String(opt).trim());
+        }
         return parsed.map(opt => String(opt).trim());
       }
     } catch {
