@@ -147,7 +147,7 @@ export const TeacherDashboard = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Список студентів та їхня статистика будуть відображені тут після інтеграції з API.
+                Наразі немає зареєстрованих студентів. Дані з'являться після реєстрації перших користувачів.
               </p>
             </CardContent>
           </Card>
@@ -164,7 +164,7 @@ export const TeacherDashboard = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Детальна аналітика буде доступна після інтеграції з API.
+                Наразі немає даних для аналітики. Статистика з'явиться після проходження тестів студентами.
               </p>
             </CardContent>
           </Card>
