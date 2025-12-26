@@ -1,6 +1,6 @@
 # API Документація для n8n ендпоінтів
 
-Base URL: `https://n8n.romanstudi0.pp.ua/webhook-test`
+Base URL: `https://n8n.romanstudi0.pp.ua/webhook`
 
 ## Аутентифікація
 
